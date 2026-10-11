@@ -1,0 +1,9 @@
+# Generated music: reproduced by generate_audio.py
+/dist/assets/*.wav
+# Local tooling and secrets
+.env
+.env.*
+!.env.example
+node_modules/
+__pycache__/
+*.pyc
