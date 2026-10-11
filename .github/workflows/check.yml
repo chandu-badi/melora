@@ -16,6 +16,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: node --check dist/app.js
+      - run: node tests/app.test.cjs
       - run: mkdir -p dist/assets && python generate_audio.py
       - name: Check generated audio
         run: |
