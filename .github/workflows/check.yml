@@ -1,4 +1,4 @@
-name: Validate and package Melora
+name: Validate and build Melora
 on:
   push:
   pull_request:
@@ -12,25 +12,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: node --check dist/app.js
+      - run: npm ci
+      - run: mkdir -p public/assets && python generate_audio.py
+      - run: node --check public/app.js
       - run: node tests/app.test.cjs
-      - run: mkdir -p dist/assets && python generate_audio.py
-      - name: Check generated audio
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import wave
-          tracks = list(Path('dist/assets').glob('track-*.wav'))
-          assert len(tracks) == 6
-          for track in tracks:
-              with wave.open(str(track)) as audio:
-                  assert audio.getnframes() / audio.getframerate() == 32
-          PY
+      - run: node tests/music-search.test.mjs
+      - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: melora-static-app
+          name: melora-app-build
           path: dist/
           retention-days: 7

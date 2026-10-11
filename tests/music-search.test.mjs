@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { createMusicSearch } from '../lib/music-search.mjs';
+const request=(q='Naatu',suffix='')=>new Request('https://example.test/api/music/search?q='+encodeURIComponent(q)+suffix);
+let calls=0,upstream;const key='example-key-do-not-expose';
+const search=createMusicSearch({fetcher:async(url)=>{calls++;upstream=url;return Response.json({items:[{id:{videoId:'79IEesucPo8'},snippet:{title:'Naatu &amp; music',channelTitle:'Label'}},{id:{videoId:'unsafe'},snippet:{title:'Filtered'}}],nextPageToken:'nextToken'});}});
+assert.equal((await search(request(),key,null)).status,401);
+assert.equal((await search(request('x'),key,'owner')).status,400);
+assert.equal((await search(request('Naatu','&language=invalid'),key,'owner')).status,400);
+assert.equal((await search(request('Naatu','&pageToken=https://evil.test'),key,'owner')).status,400);
+const missing=await search(request(),null,'owner');assert.equal(missing.status,503);assert.equal((await missing.json()).code,'SEARCH_SETUP_REQUIRED');assert.equal(calls,0);
+const result=await search(request('Naatu','&language=Telugu'),key,'owner');const body=await result.json();assert.equal(body.items.length,1);assert.equal(body.nextPageToken,'nextToken');assert.equal(JSON.stringify(body).includes(key),false);assert.equal(upstream.hostname,'www.googleapis.com');assert.equal(upstream.searchParams.get('relevanceLanguage'),'te');assert.equal(upstream.searchParams.get('videoEmbeddable'),'true');assert.equal(upstream.searchParams.get('type'),'video');
+await search(request('Naatu','&language=Telugu'),key,'owner');assert.equal(calls,1,'Repeated search should use cache');
+for(let i=0;i<10;i++)await search(request('Naatu','&language=Telugu'),key,'owner');assert.equal((await search(request(),key,'owner')).status,429);
+const failure=createMusicSearch({fetcher:async()=>Response.json({error:{message:key}},{status:403})});const fail=await failure(request(),key,'owner');assert.equal(fail.status,503);assert.equal((await fail.text()).includes(key),false);
+const offline=createMusicSearch({fetcher:async()=>{throw new Error(key)}});const unavailable=await offline(request(),key,'owner');assert.equal(unavailable.status,502);assert.equal((await unavailable.text()).includes(key),false);
+console.log('PASS: authentication, query validation, setup state, upstream filters, cache, rate limit and secret-safe provider errors');

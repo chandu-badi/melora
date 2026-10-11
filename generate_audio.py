@@ -1,6 +1,6 @@
 import math, wave, struct, random
 from pathlib import Path
-root=Path(__file__).parent/'dist/assets'; rate=22050
+root=Path(__file__).parent/'public/assets'; rate=22050
 # Original short instrumental sketches. No recordings or third-party samples.
 for song,(base,bpm) in enumerate([(220,90),(261.63,110),(174.61,75),(196,100),(246.94,120),(164.81,80)]):
     rng=random.Random(song); notes=[1,1.25,1.5,2,1.5,1.25,1.125,1.5]; duration=32

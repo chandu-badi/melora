@@ -7,3 +7,13 @@
 node_modules/
 __pycache__/
 *.pyc
+/public/assets/*.wav
+/dist/
+.wrangler/
+.sites-runtime/
+.openai/execution-profile.json
+.openai/hosting.json
+.openai/*.local.json
+.next/
+next-env.d.ts
+*.tsbuildinfo
